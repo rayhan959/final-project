@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eae4e4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f308b1;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(43, 43, 44, 0.812);
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #quiz {
+            text-align: center;
+        }
+        .options-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .options-list li {
+            background-color: #f0e9e9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .options-list li:hover {
+            background-color: #d9d1d1;
+        }
+        .btn {
+            background-color: #e0dfe0d4;
+            color: #eeebec;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #920202aa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Anime Quiz</h1>
+        </header>
+        <main>
+            <section id="quiz">
+                <div id="question-container">
+                    <p id="question">Loading question...</p>
+                    <p id="timer">Time left: 0 seconds</p>
+                </div>
+                <ul id="options" class="options-list">
+                    <!-- Options will be dynamically added using JavaScript -->
+                </ul>
+                <button id="next-button" class="btn">Next Question</button>
+                <button id="hint-button" class="btn">Get Hint</button>
+                <p id="feedback"></p>
+                <p id="score">Score: 0</p>
+                <p id="hint"></p>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "Who is the main character in Naruto?",
+                options: ["Sasuke Uchiha", "Kakashi Hatake", "Naruto Uzumaki", "Itachi Uchiha"],
+                answer: "Naruto Uzumaki"
+            },
+            {
+                question: "In which anime series do the characters fight against giant humanoid creatures known as Titans?",
+                options: ["Tokyo Ghoul", "Naruto", "Attack on Titan", "Sword Art Online"],
+                answer: "Attack on Titan"
+            },
+            {
+                question: "What is the name of the protagonist in Death Note?",
+                options: ["Light Yagami", "L Lawliet", "Ryuk", "Misa Amane"],
+                answer: "Light Yagami"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timer;
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const nextButton = document.getElementById('next-button');
+        const feedbackElement = document.getElementById('feedback');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const hintButton = document.getElementById('hint-button');
+        const hintElement = document.getElementById('hint');
+
+        // Shuffle function
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        // Start quiz with shuffled questions
+        shuffleQuestions();
+
+        function loadQuestion() {
+            const currentQuizData = quizData[currentQuestion];
+            questionElement.textContent = currentQuizData.question;
+
+            optionsElement.innerHTML = '';
+            currentQuizData.options.forEach(option => {
+                const li = document.createElement('li');
+                li.textContent = option;
+                li.classList.add('option');
+                li.addEventListener('click', handleOptionClick);
+                optionsElement.appendChild(li);
+            });
+
+            feedbackElement.textContent = ''; // Clear previous feedback
+            nextButton.style.display = 'none';
+
+            startTimer(15); // Start timer for each question (15 seconds)
+        }
+
+        function handleOptionClick(event) {
+            const selectedOption = event.target.textContent;
+            checkAnswer(selectedOption);
+            clearInterval(timer);
+            timerElement.textContent = ''; // Clear timer display
+        }
+
+        function checkAnswer(option) {
+            const currentQuizData = quizData[currentQuestion];
+            if (option === currentQuizData.answer) {
+                score += 10;
+                feedbackElement.textContent = 'Correct!';
+            } else {
+                feedbackElement.textContent = 'Wrong!';
+            }
+
+            scoreElement.textContent = `Score: ${score}`;
+
+            nextButton.style.display = 'inline-block';
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                questionElement.textContent = 'Quiz Complete!';
+                optionsElement.innerHTML = '';
+                nextButton.style.display = 'none';
+                feedbackElement.textContent = `Final Score: ${score}`;
+                score = 0;
+            }
+        }
+
+        function startTimer(durationInSeconds) {
+            let timeLeft = durationInSeconds;
+            timerElement.textContent = `Time left: ${timeLeft} seconds`;
+
+            timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft >= 0) {
+                    timerElement.textContent = `Time left: ${timeLeft} seconds`;
+                } else {
+                    clearInterval(timer);
+                    timerElement.textContent = 'Time\'s up!';
+                    disableOptions();
+                    showCorrectAnswer();
+                    nextButton.style.display = 'inline-block';
+                }
+            }, 1000);
+        }
+
+        function disableOptions() {
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.removeEventListener('click', handleOptionClick);
+                option.style.pointerEvents = 'none';
+            });
+        }
+
+        function showCorrectAnswer() {
+            const currentQuizData = quizData[currentQuestion];
+            const correctOptionIndex = currentQuizData.options.findIndex(opt => opt === currentQuizData.answer);
+            const correctOptionElement = optionsElement.children[correctOptionIndex];
+            correctOptionElement.style.backgroundColor = '#4CAF50'; // Green color for correct answer
+        }
+
+        hintButton.addEventListener('click', () => {
+            hintElement.textContent = hints[currentQuestion];
+        });
+
+        nextButton.addEventListener('click', nextQuestion);
+
+        loadQuestion();
+    </script>
+</body>
+</html>
+echo "# final-project" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/rayhan959/final-project.git
+git push -u origin main
